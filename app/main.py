@@ -11,11 +11,11 @@ from flask import Flask, abort, jsonify, render_template, request, url_for
 PAGE_SECTIONS = {
     "sampling": ["原始采信", "隔离", "重复"],
     "calibration": ["标定依据"],
-    "alignment": ["力级记录"],
+    "alignment": ["班次规则", "力级记录"],
     "elongation": ["补偿记录"],
     "verdicts": ["判验"],
     "reconcile": ["梁号勾稽", "读数勾稽"],
-    "runs": ["清单"],
+    "runs": ["班次规则", "清单"],
 }
 
 

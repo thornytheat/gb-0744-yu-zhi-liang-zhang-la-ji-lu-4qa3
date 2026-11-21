@@ -30,7 +30,10 @@
 | TRAP-17 | 夜班表旧列 extension | 位移丢失 | 双字段择一兼容 | `app/modules/m1_sampling/service.py` | `tests/test_sampling.py::test_legacy_field` |
 | TRAP-23 | 校准证书刚开始生效 | 误报过期 | 生效日含左端 | `app/modules/m2_calibration/registry.py` | `tests/test_calibration.py::test_valid_at_start` |
 | TRAP-25 | 同一千斤顶两个证书同日有效 | 随顺序选版 | 隔离对应压力读数 | `app/modules/m2_calibration/service.py` | `tests/test_calibration.py::test_overlap_has_evidence` |
+| TRAP-26 | 末级跨零点、记录日落到次日 | 末级判 NO_TARGET，整束待复测 | 按夜班 20:00–08:00 归入开工营业日，三力级同束对齐 | `app/modules/m3_alignment/shifts.py` | `tests/test_shifts.py::test_cross_midnight_strand_keeps_one_business_day` |
+| TRAP-27 | 同一束两天各有完整三力级 | 后写覆盖或并成一次张拉 | 判两次张拉，第二次 REPEAT_TENSION 隔离且不自动采信，整束待复测 | `app/modules/m3_alignment/service.py` | `tests/test_shifts.py::test_two_complete_sets_are_two_tensionings` |
+| TRAP-28 | 读数只有日期没有时刻 | 无法说明班次依据 | 按日期推断营业日并在「班次依据」标注无时刻兜底 | `app/modules/m3_alignment/shifts.py` | `tests/test_shifts.py::test_date_only_cross_midnight_inferred` |
 
 ## 对账与限制
 
-原始读数与设计钢束分别对账。班组可在结果中查到每条读数的行号，缺测阶段不会补值。样例按单日、单次张拉和三力级设计，实际施工验收须对照项目工艺要求。
+原始读数与设计钢束分别对账。班组可在结果中查到每条读数的行号，缺测阶段不会补值。样例按单日、单次张拉和三力级设计，实际施工验收须对照项目工艺要求。每条采信读数在页面与下载证据中都带记录日、营业日、班次与班次依据；重跑同一批次只引用既有批号不新增版本，复算失败（如文件损坏）时旧版结果保留在库中。

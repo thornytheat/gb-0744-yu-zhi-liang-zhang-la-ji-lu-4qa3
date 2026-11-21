@@ -28,6 +28,7 @@ def classify(targets, ends):
             {
                 "梁号": beam,
                 "钢束": strand,
+                "营业日": target.get("day"),
                 "左理论毫米": intended[0],
                 "右理论毫米": intended[1],
                 "左有效毫米": measurements[0],

@@ -24,6 +24,8 @@ def digest(data):
 def serialized(value):
     if isinstance(value, Decimal):
         return label(value)
+    if value is None:
+        return None
     return value.isoformat()
 
 
@@ -34,8 +36,8 @@ def calculate(data):
     registry = calibrations(payload["calibrations"])
     targets = parse_targets(payload["targets"])
     forces, calibration_issues = convert(records, registry)
-    aligned, force_issues = align(forces, targets)
-    measurements = compensate(aligned, targets)
+    aligned, force_issues, repeat_tensions = align(forces, targets)
+    measurements = compensate(aligned, targets, repeat_tensions)
     verdicts = classify(targets, measurements)
     issues = sorted(first_issues + calibration_issues + force_issues, key=lambda row: row["源行"])
     conservation, beams = ledger(len(payload["readings"]), aligned, issues, duplicates, verdicts)
@@ -48,12 +50,20 @@ def calculate(data):
             "时区": "Asia/Shanghai",
             "耗时毫秒": round((perf_counter() - began) * 1000),
         },
+        "班次规则": [
+            {"规则": "营业日切分", "说明": "夜班 20:00 至次日 08:00 归开工当日为一个营业日；白班 08:00 至 20:00 归自然日。"},
+            {"规则": "跨零点归属", "说明": "无时刻读数落在营业日次日时，按夜班跨零点归入前一营业日，同一钢束三力级留在同一营业日。"},
+            {"规则": "重复张拉", "说明": "同一端在营业日当日与次日各有完整三力级时判为两次张拉；后一次整组隔离（REPEAT_TENSION），不自动采信。"},
+            {"规则": "缺时刻兜底", "说明": "读数无 clock 字段时按记录日推断并在班次依据中标注；带 clock 时按 20:00/08:00 精确切班。"},
+        ],
         "原始采信": [
             {
                 "源行": r["line"],
                 "梁号": r["beam"],
                 "钢束": r["strand"],
                 "端位": r["end"],
+                "记录日": r["day"],
+                "时刻": r.get("clock"),
                 "位移毫米": r["stroke"],
                 "读数": r["force"],
                 "单位": r["unit"],
@@ -78,6 +88,11 @@ def calculate(data):
                 "钢束": r["strand"],
                 "端位": r["end"],
                 "力级%": r["level"],
+                "记录日": r["day"],
+                "时刻": r.get("clock"),
+                "营业日": r["business_day"],
+                "班次": r["shift"],
+                "班次依据": r["shift_basis"],
                 "载荷千牛": r["kn"],
                 "采信来源": r["revision"],
             }

@@ -7,6 +7,15 @@ LEVELS = {20, 40, 100}
 END_NAMES = {"左": "L", "右": "R", "L": "L", "R": "R"}
 
 
+def _valid_clock(value):
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    if len(text) != 5 or text[2] != ":" or not text[:2].isdigit() or not text[3:].isdigit():
+        return False
+    return 0 <= int(text[:2]) <= 23 and 0 <= int(text[3:]) <= 59
+
+
 def accept(rows):
     parsed, isolated, duplicates = [], [], []
     for index, raw in enumerate(rows, 1):
@@ -39,6 +48,10 @@ def accept(rows):
                 raise ValueError("计量单位或载荷错误")
             if displacement_unit == "cm":
                 row["stroke"] *= 10
+            clock = raw.get("clock")
+            if clock is not None and not _valid_clock(clock):
+                raise ValueError("时刻格式无效")
+            row["clock"] = clock.strip() if isinstance(clock, str) else None
         except (TypeError, ValueError, KeyError):
             isolated.append(evidence(row, "BAD_READING"))
             continue
